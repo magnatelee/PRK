@@ -1,4 +1,4 @@
 MPICC=mpiicc
 CC=icc 
-CHARMTOP=/home/rfvander/charm/mpi-linux-x86_64-ifort-smp-mpicxx
+CHARMTOP=REPLACE_WITH_PATH_TO_CHARM++
 CHARMC=$(CHARMTOP)/bin/charmc
