@@ -1,4 +1,4 @@
-OFLAGS  := -O3 -qopenmp
+OFLAGS  := -O2 -qopenmp
 
 CC      := /opt/mpich/dev/intel/default/bin/mpicc
 CFLAGS  := $(OFLAGS) -std=c99
@@ -9,7 +9,7 @@ FFLAGS  := $(OFLAGS)
 LD      := $(CC)
 LDFLAGS := $(OFLAGS)
 
-HEADERS = prk-alloc.h prk-util.h
+HEADERS = prk-alloc.h prk-util.h prk-transpose.h
 
 .PHONY: all clean
 
