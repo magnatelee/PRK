@@ -11,7 +11,7 @@ LDFLAGS := $(OFLAGS)
 
 .PHONY: all clean
 
-all:
+all: serial.x
 
 %.x: %.o
 	$(LD) $< -o $@
