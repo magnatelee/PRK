@@ -15,7 +15,7 @@ static void * prk_malloc(size_t bytes)
 {
     void * ptr = NULL;
     int rc = posix_memalign(&ptr, ALIGNMENT, bytes);
-    if (rc) abort();
+    if (rc!=0 || ptr==NULL) abort();
     return ptr;
 }
 

@@ -5,6 +5,7 @@
 
 #define PRAGMA(x) _Pragma(#x)
 
+/******************* OpenMP *******************/
 #if defined(_OPENMP)
 
 #define OMP_PARALLEL PRAGMA(omp parallel)
@@ -21,18 +22,17 @@
 #define PRAGMA_SIMD  PRAGMA(omp simd)
 
 #endif /* OpenMP */
+/**********************************************/
 
-#if defined(__INTEL_COMPILER)
-#define PRAGMA_IVDEP PRAGMA(ivdep)
-#ifndef _OPENMP
+#if defined(__INTEL_COMPILER) && !defined(_OPENMP)
 #define PRAGMA_SIMD  PRAGMA(simd)
-#endif
 #endif /* Intel compiler */
 
 #else /* C99 _Pragma */
 
 #warning Compiler does not understand C99-style _Pragma.
 
+/******************* OpenMP *******************/
 #define OMP_PARALLEL
 #define OMP_PARALLEL_FOR
 #define OMP_FOR
@@ -41,6 +41,9 @@
 #define OMP_PARALLEL_FOR_COLLAPSE3
 #define OMP_PARALLEL_FOR_COLLAPSE4
 #define OMP_PARALLEL_FOR_REDUCE_ADD(r)
+/**********************************************/
+
+#define PRAGMA_SIMD
 
 #endif /* C99 _Pragma */
 
