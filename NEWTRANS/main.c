@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+#if defined(USE_OPENMP) && defined(_OPENMP)
+#include <omp.h>
+#endif
+
 #include "prk-alloc.h"
 #include "prk-util.h"
 #include "prk-transpose.h"
@@ -16,13 +20,18 @@ int main(int argc, char * argv[])
         }
     }
 
-    int dim = (argc>1) ? atoi(argv[1]) : 10;
+    int dim = (argc>1) ? atoi(argv[1]) : 4096;
     double * a = prk_malloc(dim*dim*sizeof(double));
     double * b = prk_malloc(dim*dim*sizeof(double));
 
     int tilesize = (argc>2) ? atoi(argv[2]) : 32;
 
-    printf("transpose %d x %d matrix, tilesize = %d, reps = %d\n", dim, dim, tilesize, reps);
+#ifdef USE_OPENMP
+    printf("OpenMP transpose %d x %d matrix, tilesize = %d, reps = %d\n", dim, dim, tilesize, reps);
+    printf("%d threads\n", omp_get_max_threads());
+#else
+    printf("SERIAL transpose %d x %d matrix, tilesize = %d, reps = %d\n", dim, dim, tilesize, reps);
+#endif
 
     prk_fill_seq(a, dim*dim);
     prk_fill_zero(b, dim*dim);

@@ -9,7 +9,7 @@ static inline void prk_transpose_contig(double * restrict b, const double * rest
     ASSALIGN(a);
     ASSALIGN(b);
     if (tilesize<=1 || tilesize >= rowa || tilesize >= cola) {
-        PRAGMA_SIMD
+        OMP_PARALLEL_FOR
         for (int i=0; i<rowa; i++) {
             PRAGMA_SIMD
             for (int j=0; j<cola; j++) {
@@ -17,6 +17,8 @@ static inline void prk_transpose_contig(double * restrict b, const double * rest
             }
         }
     } else {
+        OMP_PARALLEL
+        OMP_FOR_COLLAPSE2
         for (int i=0; i<rowa; i+=tilesize) {
             for (int j=0; j<cola; j+=tilesize) {
                 const int imax = (i+tilesize)<rowa ? (i+tilesize) : rowa;
