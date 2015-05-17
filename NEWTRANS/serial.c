@@ -8,40 +8,35 @@
 
 int main(int argc, char * argv[])
 {
+    int reps = 10;
+    {
+        char * tmp = getenv("PRK_REPS");
+        if (tmp!=NULL) {
+            reps = atoi(tmp);
+        }
+    }
+
     size_t dim = (argc>1) ? atol(argv[1]) : 10;
     double * a = prk_malloc(dim*dim*sizeof(double));
     double * b = prk_malloc(dim*dim*sizeof(double));
 
+    size_t tilesize = (argc>2) ? atol(argv[2]) : 32;
+
+    printf("transpose %d x %d matrix, tilesize = %d, reps = %d\n", dim, dim, tilesize, reps);
+
     prk_fill_seq(a, dim*dim);
     prk_fill_zero(b, dim*dim);
 
-    prk_transpose_contig(b, a, dim, dim);
+    prk_transpose_contig(b, a, dim, dim, tilesize);
 
-    size_t errors = 0;
-    for (size_t i=0; i<dim; i++) {
-        for (size_t j=0; j<dim; j++) {
-            const double diff = b[j*dim+i] - a[i*dim+j];
-            /* -O3 with icc (ICC) 15.0.3 20150408
-             * generates incorrect results for this loop,
-             * which can be fixed by uncommenting this printf. */
-            //printf("diff = %lf\n", diff);
-            if (fabs(diff) > 1.e-12) errors++;
-        }
+    double t0 = wtime();
+    for (int r=0; r<reps; r++) {    
+        prk_transpose_contig(b, a, dim, dim, tilesize);
     }
-
-    if (errors) {
-        printf("there were %zu errors!\n", errors);
-        fflush(stdout);
-        for (size_t i=0; i<dim; i++) {
-            for (size_t j=0; j<dim; j++) {
-                const double diff = b[j*dim+i] - a[i*dim+j];
-                printf("(%d,%d) a(i,j)=%40.20lf b(j,i)=%40.20lf %s\n",
-                        i,j,a[i*dim+j],b[j*dim+i],
-                        ((fabs(diff) > 1.e-12) ? 1 : 0) ? "WRONG" : "" );
-            }
-        }
-    }
-    fflush(stdout);
+    double t1 = wtime();
+    double dt = (t1-t0)/reps;
+    double bw = 1.e-9*dim*dim*sizeof(double)/dt;
+    printf("%d x %d transpose: dt=%lf s bw=%lf GB/s\n", dim, dim, dt, bw);
 
     prk_free(a);
     prk_free(b);

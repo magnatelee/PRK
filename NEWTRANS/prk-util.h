@@ -25,4 +25,22 @@ static void prk_fill_rand(double * restrict x, size_t n)
     }
 }
 
+#if defined(_OPENMP)
+  #include <omp.h>
+#else
+  #include <sys/time.h>
+#endif
+
+double wtime(void)
+{
+  double t = 0.0;
+#if defined(_OPENMP)
+  t = omp_get_wtime();
+#else
+  struct timeval td; /* seconds since 0 GMT */
+  gettimeofday(&td,NULL);
+  t  = (double) td.tv_sec + (double) td.tv_usec * 1.e-6;
+#endif
+  return t;
+}
 #endif // PRK_UTIL_H

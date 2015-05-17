@@ -5,6 +5,12 @@
 
 #define ALIGNMENT 64
 
+#ifdef __INTEL_COMPILER
+#define ASSALIGN(a) __assume_aligned((a), ALIGNMENT)
+#else
+#define ASSALIGN(a)
+#endif
+
 static void * prk_malloc(size_t bytes)
 {
     void * ptr = NULL;
