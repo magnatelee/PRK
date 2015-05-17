@@ -1,4 +1,5 @@
-OFLAGS  := -O2 -qopenmp
+OFLAGS  := -O2 -qopenmp -Wall -xHOST
+OFLAGS  := -opt-report=5
 
 CC      := /opt/mpich/dev/intel/default/bin/mpicc
 CFLAGS  := $(OFLAGS) -std=c99

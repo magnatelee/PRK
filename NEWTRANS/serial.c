@@ -16,11 +16,11 @@ int main(int argc, char * argv[])
         }
     }
 
-    size_t dim = (argc>1) ? atol(argv[1]) : 10;
+    int dim = (argc>1) ? atoi(argv[1]) : 10;
     double * a = prk_malloc(dim*dim*sizeof(double));
     double * b = prk_malloc(dim*dim*sizeof(double));
 
-    size_t tilesize = (argc>2) ? atol(argv[2]) : 32;
+    int tilesize = (argc>2) ? atoi(argv[2]) : 32;
 
     printf("transpose %d x %d matrix, tilesize = %d, reps = %d\n", dim, dim, tilesize, reps);
 
@@ -35,8 +35,9 @@ int main(int argc, char * argv[])
     }
     double t1 = wtime();
     double dt = (t1-t0)/reps;
-    double bw = 1.e-9*dim*dim*sizeof(double)/dt;
-    printf("%d x %d transpose: dt=%lf s bw=%lf GB/s\n", dim, dim, dt, bw);
+    /* BW = Read + Write, as Rob does */
+    double bw = 2.e-6*dim*dim*sizeof(double)/dt;
+    printf("%d x %d transpose: dt=%lf s bw=%lf MB/s\n", dim, dim, dt, bw);
 
     prk_free(a);
     prk_free(b);
