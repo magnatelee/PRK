@@ -43,9 +43,9 @@ matrix:
     # Mac issue with thread_t (see https://github.com/humairakamal/fgmpi/pull/1)
     - os: osx
       env: PRK_TARGET=allfgmpi
-    # Mac issue with libtoolize (see https://github.com/regrant/sandia-shmem/pull/87)
-    - os: osx
-      env: PRK_TARGET=allshmem
+    ## Mac issue with libtoolize (see https://github.com/regrant/sandia-shmem/pull/87)
+    #- os: osx
+    #  env: PRK_TARGET=allshmem
     # Revisit this once Grappa is working with Clang
     - compiler: gcc
       env: PRK_TARGET=allgrappa
