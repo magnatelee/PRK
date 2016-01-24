@@ -15,7 +15,6 @@ if [ ! -d "$TRAVIS_ROOT/fgmpi" ]; then
     # GIT build
     git clone --depth 10 https://github.com/humairakamal/fgmpi.git fgmpi-source
     cd $TRAVIS_ROOT/fgmpi-source
-    sh ./install-autotools.sh $TRAVIS_ROOT
     ./autogen.sh
 
     # TAR or GIT
