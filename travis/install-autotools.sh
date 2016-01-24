@@ -16,6 +16,9 @@ case "$os" in
         which glibtool
         which glibtoolize
         glibtool --version
+        if [ ! -d "${TRAVIS_ROOT}/bin" ] ; then
+            mkdir -p ${TRAVIS_ROOT}/bin
+        fi
         ln -s `which glibtool` ${TRAVIS_ROOT}/bin/libtool
         ln -s `which glibtoolize` ${TRAVIS_ROOT}/bin/libtoolize
         set -e # restore fail on error
