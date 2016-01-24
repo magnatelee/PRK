@@ -60,7 +60,7 @@ case "$PRK_TARGET" in
         ;;
     allfgmpi)
         echo "Fine-Grain MPI (FG-MPI)"
-        sh ./install-autotools.sh $TRAVIS_ROOT
+        sh ./travis/install-autotools.sh $TRAVIS_ROOT
         sh ./travis/install-fgmpi.sh $TRAVIS_ROOT
         ;;
     allgrappa)
