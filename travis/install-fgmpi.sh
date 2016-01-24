@@ -22,7 +22,7 @@ if [ ! -d "$TRAVIS_ROOT/fgmpi" ]; then
     # Clang defaults to C99, which chokes on "Set_PROC_NULL"
     # -Wno-macro-redefined silences numerous instances of the same warning.
     #../configure --disable-fortran --disable-romio CFLAGS="-std=gnu89 -Wno-macro-redefined" --prefix=$TRAVIS_ROOT/fgmpi
-    ../configure --disable-fortran --disable-romio --prefix=$TRAVIS_ROOT/fgmpi
+    ../configure --prefix=$TRAVIS_ROOT/fgmpi
     make -j2
     make install
 
