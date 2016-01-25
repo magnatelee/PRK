@@ -26,7 +26,7 @@ if [ ! -d "$TRAVIS_ROOT/fgmpi" ]; then
         linux)
             git clone --depth 10 https://github.com/humairakamal/fgmpi.git fgmpi-source
             cd $TRAVIS_ROOT/fgmpi-source
-            ./autogen.sh -without-bindings #-without-f77
+            ./autogen.sh
             mkdir build && cd build
             # -Wno-macro-redefined silences numerous instances of the same warning.
             ../configure --prefix=$TRAVIS_ROOT/fgmpi \
