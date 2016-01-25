@@ -61,6 +61,9 @@ matrix:
     - os: linux
       compiler: gcc
       env: PRK_TARGET=allhpx5
+    # thread_t prevents Mac tar build; autogen.sh issue prevents git build
+    - os: osx
+      env: PRK_TARGET=allfgmpi
   allow_failures:
     - env: PRK_TARGET=allgrappa
     # UPC over MPICH on Mac hangs - may be async progress issue
