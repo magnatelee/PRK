@@ -32,7 +32,7 @@ if [ ! -d "$TRAVIS_ROOT/fgmpi" ]; then
                 gcc)
                     # -Wno-macro-redefined silences numerous instances of the same warning.
                     ../configure --prefix=$TRAVIS_ROOT/fgmpi \
-                                 CFLAGS="-std=c99 -Wno-macro-redefined" FC=false CXX=false \
+                                 CFLAGS="-Wno-macro-redefined" FC=false CXX=false \
                                  --disable-fortran --disable-cxx --disable-romio
                     ;;
                 clang)
