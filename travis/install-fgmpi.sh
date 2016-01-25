@@ -28,10 +28,20 @@ if [ ! -d "$TRAVIS_ROOT/fgmpi" ]; then
             cd $TRAVIS_ROOT/fgmpi-source
             ./autogen.sh
             mkdir build && cd build
-            # -Wno-macro-redefined silences numerous instances of the same warning.
-            ../configure --prefix=$TRAVIS_ROOT/fgmpi \
-                         CFLAGS="-std=c99 -Wno-macro-redefined" FC=false CXX=false \
-                         --disable-fortran --disable-cxx --disable-romio
+            case "$CC" in
+                gcc)
+                    # -Wno-macro-redefined silences numerous instances of the same warning.
+                    ../configure --prefix=$TRAVIS_ROOT/fgmpi \
+                                 CFLAGS="-std=c99 -Wno-macro-redefined" FC=false CXX=false \
+                                 --disable-fortran --disable-cxx --disable-romio
+                    ;;
+                clang)
+                    # cannot disable the warning we wish to exclude so disable all of them.
+                    ../configure --prefix=$TRAVIS_ROOT/fgmpi \
+                                 CFLAGS="-w" FC=false CXX=false \
+                                 --disable-fortran --disable-cxx --disable-romio
+                    ;;
+            esac
             ;;
     esac
     make
