@@ -150,12 +150,12 @@ int main(int argc, char ** argv)
 
   vector_length  = atol(*++argv);
   if (vector_length < 1){
-    printf("ERROR: vector length must be >= 1 : %d \n",vector_length);
+    printf("ERROR: vector length must be >= 1 : %ld \n",vector_length);
     exit(EXIT_FAILURE);
   }
 
   total_length = vector_length*2*nthread_input*sizeof(double);
-  vector = (double *) malloc(total_length);
+  vector = (double *) prk_malloc(total_length);
   if (!vector) {
     printf("ERROR: Could not allocate space for vectors: %ld\n", total_length);
     exit(EXIT_FAILURE);
@@ -195,7 +195,7 @@ int main(int argc, char ** argv)
   } 
   else {
     printf("Number of threads              = %d\n",nthread_input);
-    printf("Vector length                  = %d\n", vector_length);
+    printf("Vector length                  = %ld\n", vector_length);
     printf("Reduction algorithm            = %s\n", algorithm);
     printf("Number of iterations           = %d\n", iterations);
   }

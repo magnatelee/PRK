@@ -64,7 +64,8 @@ HISTORY: Written by  Rob Van der Wijngaart, February 2009.
 #define A(i,j)        A_p[(i)+order*(j)]
 #define B(i,j)        B_p[(i)+order*(j)]
 
-static double test_results (int , double*);
+/* Never used...
+ * static double test_results (int , double*); */
 
 int main(int argc, char ** argv) {
 
@@ -101,7 +102,7 @@ int main(int argc, char ** argv) {
 
   order = atol(*++argv); 
   if (order < 0){
-    printf("ERROR: Matrix Order must be greater than 0 : %d \n", order);
+    printf("ERROR: Matrix Order must be greater than 0 : %ld \n", order);
     exit(EXIT_FAILURE);
   }
 
@@ -113,12 +114,12 @@ int main(int argc, char ** argv) {
   ** Allocate space for the input and transpose matrix
   *********************************************************************/
 
-  A_p   = (double *)malloc(order*order*sizeof(double));
+  A_p   = (double *)prk_malloc(order*order*sizeof(double));
   if (A_p == NULL){
     printf(" Error allocating space for input matrix\n");
     exit(EXIT_FAILURE);
   }
-  B_p  = (double *)malloc(order*order*sizeof(double));
+  B_p  = (double *)prk_malloc(order*order*sizeof(double));
   if (B_p == NULL){
     printf(" Error allocating space for transposed matrix\n");
     exit(EXIT_FAILURE);
@@ -126,8 +127,8 @@ int main(int argc, char ** argv) {
 
   bytes = 2.0 * sizeof(double) * order * order;
 
-  printf("Matrix order          = %d\n", order);
-  if (tile_size < order) printf("Tile size             = %d\n", tile_size);
+  printf("Matrix order          = %ld\n", order);
+  if (tile_size < order) printf("Tile size             = %ld\n", tile_size);
   else                   printf("Untiled\n");
   printf("Number of iterations  = %d\n", iterations);
 
@@ -142,6 +143,8 @@ int main(int argc, char ** argv) {
   for (j=0;j<order;j++) for (i=0;i<order; i++)  {
     B(i,j) = 0.0;
   }
+
+  trans_time = 0.0; /* silence compiler warning */
 
   for (iter = 0; iter<=iterations; iter++){
 

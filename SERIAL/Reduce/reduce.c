@@ -97,7 +97,7 @@ int main(int argc, char ** argv)
   printf("Vector length                  = %ld\n", vector_length);
   printf("Number of iterations           = %d\n", iterations);
 
-  vector= (double *) malloc(2*vector_length*sizeof(double)); 
+  vector= (double *) prk_malloc(2*vector_length*sizeof(double)); 
   if (vector==NULL) {
     printf("ERROR: Could not allocate space for vector: %ld\n",
            2*vector_length*sizeof(double));
@@ -111,6 +111,8 @@ int main(int argc, char ** argv)
     vector[i]  = (double)1;
     ones[i]    = (double)1;
   }
+
+  reduce_time = 0.0; /* silence compiler warning */
 
   for (iter=0; iter<=iterations; iter++) {
 

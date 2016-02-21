@@ -250,15 +250,15 @@ int main(int argc, char **argv) {
   /* even though the table size can be represented, computing the space 
      required for the table may lead to overflow                            */
   tablespace = (size_t) tablesize*sizeof(u64Int);
-  if ((tablespace/sizeof(u64Int)) != tablesize || tablespace <=0) {
+  if ((signed)(tablespace/sizeof(u64Int)) != tablesize || tablespace <=0) {
     printf("Cannot represent space for table on this system; ");
     printf("reduce log2 tablesize\n");
     exit(EXIT_FAILURE);
   }
 
 #ifdef VERBOSE
-  Hist = (u64Int *) malloc(tablespace);
-  HistHist = (unsigned int *) malloc(tablespace);
+  Hist = (u64Int *) prk_malloc(tablespace);
+  HistHist = (unsigned int *) prk_malloc(tablespace);
   if (!Hist || ! HistHist) {
     printf("ERROR: Could not allocate space for histograms\n");
     exit(EXIT_FAILURE);
@@ -273,7 +273,7 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-  Table = (u64Int *) malloc(tablespace);
+  Table = (u64Int *) prk_malloc(tablespace);
   if (!Table) {
     printf("ERROR: Could not allocate space of "FSTR64U"  bytes for table\n",
            (u64Int) tablespace);
@@ -288,7 +288,7 @@ int main(int argc, char **argv) {
   printf("Vector length          = "FSTR64U"\n", (u64Int) nstarts);
   printf("Percent errors allowed = "FSTR64U"\n", (u64Int) ERRORPERCENT);
 
-  ran = (u64Int *) malloc(nstarts*sizeof(u64Int));
+  ran = (u64Int *) prk_malloc(nstarts*sizeof(u64Int));
   if (!ran) {
     printf("ERROR: Could not allocate %d bytes for random numbers\n",
            nstarts*(int)sizeof(u64Int));

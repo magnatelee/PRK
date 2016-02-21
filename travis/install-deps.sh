@@ -13,6 +13,24 @@ case "$PRK_TARGET" in
         echo "Serial"
         ;;
 
+    allfortran)
+        echo "Fortran"
+        if [ "${TRAVIS_OS_NAME}" == "osx" ] ; then
+            set +e
+            brew update
+            p=gcc
+            if [ "x`brew ls --versions $p`" == "x" ] ; then
+                echo "$p is not installed - installing it"
+                brew install $p
+            else
+                echo "$p is installed - upgrading it"
+                brew upgrade $p
+            fi
+            brew list gcc
+            set -e
+        fi
+        ;;
+
     allopenmp)
         echo "OpenMP"
         sh ./travis/install-clang.sh $TRAVIS_ROOT omp
@@ -72,6 +90,11 @@ case "$PRK_TARGET" in
     allchapel)
         echo "Chapel"
         sh ./travis/install-chapel.sh $TRAVIS_ROOT
+        ;;
+    allhpx3)
+        echo "HPX-3"
+        sh ./travis/install-cmake.sh $TRAVIS_ROOT
+        sh ./travis/install-hpx3.sh $TRAVIS_ROOT
         ;;
     allhpx5)
         echo "HPX-5"

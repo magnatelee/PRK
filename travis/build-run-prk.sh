@@ -9,6 +9,8 @@ PRK_COMPILER="$CC"
 
 MPI_IMPL=mpich
 
+echo "PRKVERSION=\"'2.16'\"" > common/make.defs
+
 case "$os" in
     Darwin)
         # Homebrew should put MPI here...
@@ -20,9 +22,19 @@ case "$os" in
 esac
 
 case "$PRK_TARGET" in
+    allpython)
+        echo "Python"
+        which python
+        python --version
+        export PRK_TARGET_PATH=PYTHON
+        python $PRK_TARGET_PATH/p2p.py             10 1024 1024
+        python $PRK_TARGET_PATH/stencil.py         10 1000
+        python $PRK_TARGET_PATH/transpose.py       10 1024
+        python $PRK_TARGET_PATH/transpose-numpy.py 10 1024
+        ;;
     allserial)
         echo "Serial"
-        echo "CC=$PRK_COMPILER" > common/make.defs
+        echo "CC=$PRK_COMPILER" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=SERIAL
         $PRK_TARGET_PATH/Synch_p2p/p2p       10 1024 1024
@@ -33,10 +45,51 @@ case "$PRK_TARGET" in
         $PRK_TARGET_PATH/Nstream/nstream     10 16777216 32
         $PRK_TARGET_PATH/Sparse/sparse       10 10 5
         $PRK_TARGET_PATH/DGEMM/dgemm         10 1024 32
+        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 2 GEOMETRIC 0.99
+        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 0 1 SINUSOIDAL
+        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 0 LINEAR 1.0 3.0
+        $PRK_TARGET_PATH/PIC/pic             10 1000 1000000 1 0 PATCH 0 200 100 200 
+        ;;
+    allfortran)
+        echo "Fortran"
+        case "$CC" in
+            gcc)
+                for gccversion in "-5" "-5.3" "-5.2" "-5.1" "-4.9" "-4.8" "-4.7" "-4.6" "" ; do
+                    if [ -f "`which gfortran$gccversion`" ]; then
+                        export PRK_FC="gfortran$gccversion"
+                        echo "Found GCC Fortran: $PRK_FC"
+                        break
+                    fi
+                done
+                if [ "x$PRK_FC" == "x" ] ; then
+                    echo "No Fortran compiler found!"
+                    exit 9
+                fi
+                export PRK_FC="$PRK_FC -std=f2008 -cpp"
+                echo "FC=$PRK_FC\nOPENMPFLAG=-fopenmp\nCOARRAYFLAG=-fcoarray=single" >> common/make.defs
+                ;;
+            clang)
+                echo "LLVM Fortran is not supported."
+                exit 9
+                echo "FC=flang" >> common/make.defs
+                ;;
+        esac
+        make $PRK_TARGET
+        export PRK_TARGET_PATH=FORTRAN
+        $PRK_TARGET_PATH/Synch_p2p/p2p               10 1024 1024
+        $PRK_TARGET_PATH/Stencil/stencil             10 1000
+        $PRK_TARGET_PATH/Transpose/transpose         10 1024 32
+        export OMP_NUM_THREADS=2
+        $PRK_TARGET_PATH/Synch_p2p/p2p-omp           10 1024 1024
+        $PRK_TARGET_PATH/Stencil/stencil-omp         10 1000
+        $PRK_TARGET_PATH/Transpose/transpose-omp     10 1024 32
+        # FIXME: only testing with a single image right now.
+        $PRK_TARGET_PATH/Transpose/transpose-coarray 10 1024 1
+        $PRK_TARGET_PATH/Transpose/transpose-coarray 10 1024 32
         ;;
     allopenmp)
         echo "OpenMP"
-        echo "CC=$PRK_COMPILER\nOPENMPFLAG=-fopenmp" > common/make.defs
+        echo "CC=$PRK_COMPILER -std=c99\nOPENMPFLAG=-fopenmp" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=OPENMP
         export OMP_NUM_THREADS=4
@@ -55,7 +108,7 @@ case "$PRK_TARGET" in
         ;;
     allmpi1)
         echo "MPI-1"
-        echo "MPICC=$MPI_ROOT/bin/mpicc" > common/make.defs
+        echo "MPICC=$MPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=MPI1
         export PRK_MPI_PROCS=4
@@ -72,7 +125,7 @@ case "$PRK_TARGET" in
         ;;
     allmpio*mp)
         echo "MPI+OpenMP"
-        echo "MPICC=$MPI_ROOT/bin/mpicc\nOPENMPFLAG=-fopenmp" > common/make.defs
+        echo "MPICC=$MPI_ROOT/bin/mpicc\nOPENMPFLAG=-fopenmp" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=MPIOPENMP
         export PRK_MPI_PROCS=2
@@ -85,7 +138,7 @@ case "$PRK_TARGET" in
         ;;
     allmpirma)
         echo "MPI-RMA"
-        echo "MPICC=$MPI_ROOT/bin/mpicc" > common/make.defs
+        echo "MPICC=$MPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=MPIRMA
         export PRK_MPI_PROCS=4
@@ -96,7 +149,7 @@ case "$PRK_TARGET" in
         ;;
     allmpishm)
         echo "MPI+MPI"
-        echo "MPICC=$MPI_ROOT/bin/mpicc" > common/make.defs
+        echo "MPICC=$MPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=MPISHM
         export PRK_MPI_PROCS=4
@@ -111,7 +164,7 @@ case "$PRK_TARGET" in
         # This should be fixed by rpath (https://github.com/regrant/sandia-shmem/issues/83)
         export LD_LIBRARY_PATH=$TRAVIS_ROOT/sandia-openshmem/lib:$TRAVIS_ROOT/libfabric/lib:$LD_LIBRARY_PATH
         export SHMEM_ROOT=$TRAVIS_ROOT/sandia-openshmem
-        echo "SHMEMTOP=$SHMEM_ROOT\nSHMEMCC=$SHMEM_ROOT/bin/oshcc" > common/make.defs
+        echo "SHMEMTOP=$SHMEM_ROOT\nSHMEMCC=$SHMEM_ROOT/bin/oshcc" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=SHMEM
         export PRK_SHMEM_PROCS=4
@@ -139,14 +192,14 @@ case "$PRK_TARGET" in
                         export UPC_ROOT=$TRAVIS_ROOT/clupc
                         ;;
                 esac
-                echo "UPCC=$UPC_ROOT/bin/upc" > common/make.defs
+                echo "UPCC=$UPC_ROOT/bin/upc" >> common/make.defs
                 export PRK_LAUNCHER=""
                 export PRK_LAUNCHER_ARGS="-n $PRK_UPC_PROCS"
                 make $PRK_TARGET
                 ;;
             bupc)
                 export UPC_ROOT=$TRAVIS_ROOT/bupc-$CC
-                echo "UPCC=$UPC_ROOT/bin/upcc" > common/make.defs
+                echo "UPCC=$UPC_ROOT/bin/upcc" >> common/make.defs
                 # -N $nodes -n UPC threads -c $cores_per_node
                 # -localhost is only for UDP
                 case "$GASNET_CONDUIT" in
@@ -190,7 +243,7 @@ case "$PRK_TARGET" in
                 #export CHARM_ROOT=$TRAVIS_ROOT/charm-6.7.0/multicore-linux64
                 ;;
         esac
-        echo "CHARMTOP=$CHARM_ROOT" > common/make.defs
+        echo "CHARMTOP=$CHARM_ROOT" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=CHARM++
         export PRK_CHARM_PROCS=4
@@ -214,7 +267,7 @@ case "$PRK_TARGET" in
                 #export CHARM_ROOT=$TRAVIS_ROOT/charm-6.7.0/multicore-linux64
                 ;;
         esac
-        echo "CHARMTOP=$CHARM_ROOT" > common/make.defs
+        echo "CHARMTOP=$CHARM_ROOT" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=AMPI
         export PRK_CHARM_PROCS=4
@@ -235,7 +288,7 @@ case "$PRK_TARGET" in
     allfgmpi)
         echo "Fine-Grain MPI (FG-MPI)"
         export FGMPI_ROOT=$TRAVIS_ROOT/fgmpi
-        echo "FGMPITOP=$FGMPI_ROOT\nFGMPICC=$FGMPI_ROOT/bin/mpicc" > common/make.defs
+        echo "FGMPITOP=$FGMPI_ROOT\nFGMPICC=$FGMPI_ROOT/bin/mpicc" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=FG_MPI
         export PRK_MPI_PROCS=2
@@ -260,7 +313,7 @@ case "$PRK_TARGET" in
         export GRAPPA_PREFIX=$TRAVIS_ROOT/grappa
         export SCRIPT_PATH=$TRAVIS_ROOT/grappa/bin
         ########################
-        echo "GRAPPATOP=$TRAVIS_ROOT/grappa" > common/make.defs
+        echo "GRAPPATOP=$TRAVIS_ROOT/grappa" >> common/make.defs
         make $PRK_TARGET
         export PRK_TARGET_PATH=GRAPPA
         export PRK_MPI_PROCS=2
@@ -270,6 +323,9 @@ case "$PRK_TARGET" in
         $PRK_LAUNCHER -n $PRK_MPI_PROCS $PRK_TARGET_PATH/Transpose/transpose 10 1024 32
         ;;
     allchapel)
+        echo "Nothing to do yet"
+        ;;
+    allhpx3)
         echo "Nothing to do yet"
         ;;
     allhpx5)
