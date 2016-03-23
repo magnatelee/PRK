@@ -12,7 +12,7 @@ CXXFLAGS += -I..
 
 all: $(PROGRAM)
 
-$(PROGRAM): $(PROGRAM).c
+$(PROGRAM): $(PROGRAM).cc
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 run: $(PROGRAM)

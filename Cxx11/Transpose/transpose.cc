@@ -74,23 +74,23 @@ int main(int argc, char * argv[])
   ** read and test input parameters
   *********************************************************************/
 
-  printf("Parallel Research Kernels version %s\n", PRKVERSION);
-  printf("Serial Matrix transpose: B = A^T\n");
+  std::cout << "Parallel Research Kernels version " << PRKVERSION << std::endl;
+  std::cout << "Serial Matrix transpose: B = A^T" << std::endl;
 
   if (argc != 4 && argc != 3) {
-    printf("Usage: %s <# iterations> <matrix order> [tile size]\n", argv[0]);
+    std::cout << "Usage: " << argv[0] << " <# iterations> <matrix order> [tile size]" << std::endl;
     exit(EXIT_FAILURE);
   }
 
   int iterations  = atoi(argv[1]); /* number of times to do the transpose */
   if (iterations < 1) {
-    printf("ERROR: iterations must be >= 1 : %d \n", iterations);
+    std::cout << "ERROR: iterations must be >= 1 : " << iterations << std::endl;
     exit(EXIT_FAILURE);
   }
 
   prk_index_t order = atoi(argv[2]); /* order of a the matrix */
   if (order <= 0) {
-    printf("ERROR: Matrix Order must be greater than 0 : %llu \n", (long long unsigned)order);
+    std::cout << "ERROR: Matrix Order must be greater than 0 : " << order << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -99,7 +99,7 @@ int main(int argc, char * argv[])
       tile_size = atoi(argv[3]);
   }
   /* a non-positive tile size means no tiling of the local transpose */
-  if (tile_size <=0) {
+  if (tile_size <= 0) {
       tile_size = order;
   }
 
@@ -107,51 +107,41 @@ int main(int argc, char * argv[])
   ** Allocate space for the input and transpose matrix
   *********************************************************************/
 
-  size_t bytes = (size_t)order * (size_t)order * sizeof(double);
+  double * A = new double[order*order];
+  double * B = new double[order*order];
 
-  double (* const restrict A)[order] = (double (*)[order]) prk_malloc(bytes);
-  if (A == NULL) {
-    printf(" Error allocating space for transposed matrix\n");
-    exit(EXIT_FAILURE);
-  }
-  double (* const restrict B)[order] = (double (*)[order]) prk_malloc(bytes);
-  if (B == NULL) {
-    printf(" Error allocating space for input matrix\n");
-    exit(EXIT_FAILURE);
-  }
-
-  printf("Matrix order          = %llu\n", (long long unsigned)order);
+  std::cout << "Matrix order          = " << order << std::endl;
   if (tile_size < order) {
-      printf("Tile size             = %llu\n", (long long unsigned)tile_size);
+      std::cout << "Tile size             = " << tile_size << std::endl;
   } else {
-      printf("Untiled\n");
+      std::cout << "Untiled" << std::endl;
   }
-  printf("Number of iterations  = %d\n", iterations);
+  std::cout << "Number of iterations  = " << iterations << std::endl;
 
   double trans_time = 0.0;
 
   {
       for (prk_index_t j=0; j<order; j++) {
         for (prk_index_t i=0; i<order; i++) {
-          const double val = (double) ((size_t)order*(size_t)j+(size_t)i);
-          A[j][i] = val;
-          B[j][i] = 0.0;
+          const double val = static_cast<size_t>(order)*static_cast<size_t>(j)+static_cast<size_t>(i);
+          A[j*order+i] = val;
+          B[j*order+i] = 0.0;
         }
       }
 
       for (int iter = 0; iter<=iterations; iter++) {
         /* start timer after a warmup iteration */
         if (iter==1) {
-          { trans_time = prk::wtime(); }
+          trans_time = prk::wtime();
         }
         /* transpose the  matrix */
         if (tile_size < order) {
           for (prk_index_t it=0; it<order; it+=tile_size) {
-            for (prk_index_t jt=0; jt<order; jt+=tile_size) {
-              for (prk_index_t i=it; i<MIN(order,it+tile_size); i++) {
-                for (prk_index_t j=jt; j<MIN(order,jt+tile_size); j++) {
-                  B[i][j] += A[j][i];
-                  A[j][i] += 1.0;
+         ,   for (prk_index_t jt=0; jt<order; jt+=tile_size) {
+              for (prk_index_t i=it; i<std::min(order,it+tile_size); i++) {
+                for (prk_index_t j=jt; j<std::min(order,jt+tile_size); j++) {
+                  B[i*order+j] += A[j*order+i];
+                  A[j*order+i] += 1.0;
                 }
               }
             }
@@ -159,8 +149,8 @@ int main(int argc, char * argv[])
         } else {
           for (prk_index_t i=0;i<order; i++) {
             for (prk_index_t j=0;j<order;j++) {
-              B[i][j] += A[j][i];
-              A[j][i] += 1.0;
+              B[i*order+j] += A[j*order+i];
+              A[j*order+i] += 1.0;
             }
           }
         }
@@ -178,26 +168,28 @@ int main(int argc, char * argv[])
   for (prk_index_t j=0;j<order;j++) {
     for (prk_index_t i=0;i<order; i++) {
       const size_t offset_ij = (size_t)i*(size_t)order+(size_t)j;
-      abserr += std::fabs(B[j][i] - ((double)offset_ij*(iterations+1.)+addit));
+      const double reference = static_cast<double>(offset_ij)*static_cast<double>(iterations+1)+addit;
+      abserr += std::fabs(B[j*order+i] - reference);
     }
   }
 
-  prk_free(B);
-  prk_free(A);
+  delete [] B;
+  delete [] A;
 
 #ifdef VERBOSE
-  printf("Sum of absolute differences: %f\n",abserr);
+  std::cout << "Sum of absolute differences: " << abserr << std::endl;
 #endif
 
   const double epsilon = 1.e-8;
   if (abserr < epsilon) {
-    printf("Solution validates\n");
+    std::cout << "Solution validates" << std::endl;
     double avgtime = trans_time/iterations;
-    printf("Rate (MB/s): %lf Avg time (s): %lf\n", 1.0E-06 * (2L*bytes)/avgtime, avgtime);
-    exit(EXIT_SUCCESS);
-  }
-  else {
-    printf("ERROR: Aggregate squared error %e exceeds threshold %e\n", abserr, epsilon);
+    size_t bytes = (size_t)order * (size_t)order * sizeof(double);
+    std::cout << "Rate (MB/s): " << 1.0E-06 * (2L*bytes)/avgtime
+              << " Avg time (s): " << avgtime << std::endl;
+  } else {
+    std::cout << "ERROR: Aggregate squared error " << abserr
+              << " exceeds threshold " << epsilon << std::endl;
     exit(EXIT_FAILURE);
   }
 

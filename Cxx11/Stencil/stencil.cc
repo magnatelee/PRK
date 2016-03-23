@@ -276,17 +276,20 @@ int main(int argc, char * argv[])
   /* verify correctness */
   double reference_norm = 2.*(iterations+1.);
   if (std::fabs(norm-reference_norm) > epsilon) {
-    std::cout << "ERROR: L1 norm = " << norm << " Reference L1 norm = " << reference_norm << std::endl;
+    std::cout << "ERROR: L1 norm = " << norm
+              << " Reference L1 norm = " << reference_norm << std::endl;
     exit(EXIT_FAILURE);
   }
   else {
     std::cout << "Solution validates" << std::endl;
 #ifdef VERBOSE
-    std::cout << "L1 norm = " << norm << " Reference L1 norm = " << reference_norm << std::endl;
+    std::cout << "L1 norm = " << norm
+              << " Reference L1 norm = " << reference_norm << std::endl;
 #endif
     size_t flops = (2L*(size_t)stencil_size+1L) * active_points;
     double avgtime = stencil_time/iterations;
-    std::cout << "Rate (MFlops/s): " << 1.0e-6 * static_cast<double>(flops)/avgtime << " Avg time (s): " << avgtime << std::endl;
+    std::cout << "Rate (MFlops/s): " << 1.0e-6 * static_cast<double>(flops)/avgtime
+              << " Avg time (s): " << avgtime << std::endl;
   }
 
   return 0;

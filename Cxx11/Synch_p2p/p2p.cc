@@ -69,56 +69,48 @@ int main(int argc, char ** argv)
   ** process and test input parameters
   ********************************************************************************/
 
-  printf("Parallel Research Kernels version %s\n", PRKVERSION);
-  printf("Serial pipeline execution on 2D grid\n");
+  std::cout << "Parallel Research Kernels version" << PRKVERSION << std::endl;
+  std::cout << "Serial pipeline execution on 2D grid" << std::endl;
 
   if (argc != 4){
-    printf("Usage: %s <# iterations> <first array dimension> ", *argv);
-    printf("<second array dimension>\n");
+    std::cout << "Usage: " << argv[0] << " <# iterations> <first array dimension> <second array dimension>" << std::endl;
     return(EXIT_FAILURE);
   }
 
   /* number of times to run the pipeline algorithm */
   int iterations  = atoi(*++argv);
   if (iterations < 1){
-    printf("ERROR: iterations must be >= 1 : %d \n",iterations);
+    std::cout << "ERROR: iterations must be >= 1 : " << iterations << std::endl;
     exit(EXIT_FAILURE);
   }
 
   /* grid dimensions */
-  int m  = atol(*++argv);
-  int n  = atol(*++argv);
+  int m = atol(argv[1]);
+  int n = atol(argv[2]);
 
-  if (m < 1 || n < 1){
-    printf("ERROR: grid dimensions must be positive: %d, %d \n", m, n);
+  if (m < 1 || n < 1) {
+    std::cout << "ERROR: grid dimensions must be positive: " << m <<  n << std::endl;
     exit(EXIT_FAILURE);
   }
-
-  /* total required length to store grid values */
-  size_t bytes = (size_t)m*(size_t)n*sizeof(double);
 
   /* working set */
-  double (* restrict vector)[n] = (double (*)[n]) prk_malloc(bytes);
-  if (vector==NULL) {
-    printf("ERROR: Could not allocate space for array: %zu\n", bytes);
-    exit(EXIT_FAILURE);
-  }
+  double * vector = new double[m*n];
 
-  printf("Grid sizes                = %d, %d\n", m, n);
-  printf("Number of iterations      = %d\n", iterations);
+  std::cout << "Grid sizes                = " << m << ", " << n << std::endl;
+  std::cout << "Number of iterations      = " << iterations << std::endl;
 
   /* clear the array */
   for (int i=0; i<m; i++) {
     for (int j=0; j<n; j++) {
-      vector[i][j] = 0.0;
+      vector[i*n+j] = 0.0;
     }
   }
   /* set boundary values (bottom and left side of grid) */
   for (int j=0; j<n; j++) {
-    vector[0][j] = (double)j;
+    vector[0*n+j] = static_cast<double>(j);
   }
   for (int i=0; i<m; i++) {
-    vector[i][0] = (double)i;
+    vector[i*n+0] = static_cast<double>(i);
   }
 
   double pipeline_time = 0.0; /* silence compiler warning */
@@ -130,14 +122,14 @@ int main(int argc, char ** argv)
 
     for (int i=1; i<m; i++) {
       for (int j=1; j<n; j++) {
-        vector[i][j] = vector[i-1][j] + vector[i][j-1] - vector[i-1][j-1];
+        vector[i*n+j] = vector[(i-1)*n+j] + vector[i*n+(j-1)] - vector[(i-1)*n+(j-1)];
       }
     }
 
     /* copy top right corner value to bottom left corner to create dependency; we
        need a barrier to make sure the latest value is used. This also guarantees
        that the flags for the next iteration (if any) are not getting clobbered  */
-    vector[0][0] = -vector[m-1][n-1];
+    vector[0*n+0] = -vector[(m-1)*n+(n-1)];
   }
 
   pipeline_time = prk::wtime() - pipeline_time;
@@ -148,24 +140,23 @@ int main(int argc, char ** argv)
 
   /* verify correctness, using top right value;                                  */
   double corner_val = (double)((iterations+1)*(n+m-2));
-  if ( (std::fabs(vector[m-1][n-1] - corner_val)/corner_val) > epsilon) {
-    printf("ERROR: checksum %lf does not match verification value %lf\n",
-           vector[m-1][n-1], corner_val);
+  if ( (std::fabs(vector[(m-1)*n+(n-1)] - corner_val)/corner_val) > epsilon) {
+    std::cout << "ERROR: checksum " << vector[(m-1)*n+(n-1)]
+              << " does not match verification value" << corner_val << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  prk_free(vector);
+  delete [] vector;
 
 #ifdef VERBOSE
-  printf("Solution validates; verification value = %lf\n", corner_val);
+  std::cout << "Solution validates; verification value = " << corner_val << std::endl;
 #else
-  printf("Solution validates\n");
+  std::cout << "Solution validates" << std::endl;
 #endif
   double avgtime = pipeline_time/iterations;
-  printf("Rate (MFlops/s): %lf Avg time (s): %lf\n",
-         1.0e-6 * 2 * ((double)((size_t)(m-1)*(size_t)(n-1)))/avgtime, avgtime);
-
-  exit(EXIT_SUCCESS);
+  std::cout << "Rate (MFlops/s): "
+            << 1.0e-6 * 2. * ( static_cast<size_t>(m-1)*static_cast<size_t>(n-1) )/avgtime
+            << " Avg time (s): " << avgtime << std::endl;
 
   return 0;
 }
