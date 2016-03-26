@@ -88,13 +88,13 @@ int main(int argc, char * argv[])
     return(EXIT_FAILURE);
   }
 
-  int iterations  = atoi(argv[1]); /* number of times to run the algorithm */
+  int iterations  = std::atoi(argv[1]); /* number of times to run the algorithm */
   if (iterations < 1){
     std::cout << "ERROR: iterations must be >= 1" << iterations << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  int n  = atoi(argv[2]); /* linear grid dimension */
+  int n  = std::atoi(argv[2]); /* linear grid dimension */
   if (n < 1){
     std::cout << "ERROR: grid dimension must be positive: " << n << std::endl;
     exit(EXIT_FAILURE);
@@ -102,7 +102,7 @@ int main(int argc, char * argv[])
 
   int tilesize = 1; /* loop nest block factor */
   if (argc == 4) {
-    tilesize = atoi(argv[3]);
+    tilesize = std::atoi(argv[3]);
     if (tilesize>n)  tilesize=n;
     if (tilesize<=0) tilesize=1;
   }
