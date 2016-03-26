@@ -63,7 +63,7 @@ HISTORY: - Written by Rob Van der Wijngaart, February 2009.
 /* error tolerance */
 const double epsilon = 1.e-8;
 
-int main(int argc, char ** argv)
+int main(int argc, char* argv[])
 {
   /*******************************************************************************
   ** process and test input parameters
@@ -78,15 +78,15 @@ int main(int argc, char ** argv)
   }
 
   /* number of times to run the pipeline algorithm */
-  int iterations  = atoi(*++argv);
+  int iterations  = std::atoi(argv[1]);
   if (iterations < 1){
     std::cout << "ERROR: iterations must be >= 1 : " << iterations << std::endl;
     exit(EXIT_FAILURE);
   }
 
   /* grid dimensions */
-  int m = atol(argv[1]);
-  int n = atol(argv[2]);
+  int m = atol(argv[2]);
+  int n = atol(argv[3]);
 
   if (m < 1 || n < 1) {
     std::cout << "ERROR: grid dimensions must be positive: " << m <<  n << std::endl;
