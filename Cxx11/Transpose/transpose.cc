@@ -65,7 +65,7 @@ HISTORY: Written by  Rob Van der Wijngaart, February 2009.
 #ifdef PRK_LOOP_INDEX_TYPE
 typedef PRK_LOOP_INDEX_TYPE prk_index_t;
 #else
-typedef int prk_index_t;
+typedef size_t prk_index_t;
 #endif
 
 int main(int argc, char * argv[])
@@ -82,13 +82,13 @@ int main(int argc, char * argv[])
     exit(EXIT_FAILURE);
   }
 
-  int iterations  = atoi(argv[1]); /* number of times to do the transpose */
+  int iterations  = std::atoi(argv[1]); /* number of times to do the transpose */
   if (iterations < 1) {
     std::cout << "ERROR: iterations must be >= 1 : " << iterations << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  prk_index_t order = atoi(argv[2]); /* order of a the matrix */
+  prk_index_t order = std::atoi(argv[2]); /* order of a the matrix */
   if (order <= 0) {
     std::cout << "ERROR: Matrix Order must be greater than 0 : " << order << std::endl;
     exit(EXIT_FAILURE);
@@ -96,7 +96,7 @@ int main(int argc, char * argv[])
 
   prk_index_t tile_size = 32; /* default tile size for tiling of local transpose */
   if (argc == 4) {
-      tile_size = atoi(argv[3]);
+      tile_size = std::atoi(argv[3]);
   }
   /* a non-positive tile size means no tiling of the local transpose */
   if (tile_size <= 0) {
@@ -107,8 +107,14 @@ int main(int argc, char * argv[])
   ** Allocate space for the input and transpose matrix
   *********************************************************************/
 
-  double * A = new double[order*order];
-  double * B = new double[order*order];
+  double * A;
+  double * B;
+  try {
+      A = new double[order*order];
+      B = new double[order*order];
+  } catch (std::bad_alloc& err) {
+      std::cout << "memory allocation failed" << err.what() << std::endl;
+  }
 
   std::cout << "Matrix order          = " << order << std::endl;
   if (tile_size < order) {
