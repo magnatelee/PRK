@@ -137,7 +137,7 @@ int main(int argc, char * argv[])
         /* transpose the  matrix */
         if (tile_size < order) {
           for (prk_index_t it=0; it<order; it+=tile_size) {
-         ,   for (prk_index_t jt=0; jt<order; jt+=tile_size) {
+            for (prk_index_t jt=0; jt<order; jt+=tile_size) {
               for (prk_index_t i=it; i<std::min(order,it+tile_size); i++) {
                 for (prk_index_t j=jt; j<std::min(order,jt+tile_size); j++) {
                   B[i*order+j] += A[j*order+i];
