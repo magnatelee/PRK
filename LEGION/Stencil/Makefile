@@ -46,6 +46,7 @@ CC_FLAGS	= $(RADIUSFLAG) -DRESTRICT_KEYWORD \
 NVCC_FLAGS	?=
 GASNET_FLAGS	?=
 LD_FLAGS	?=
+LD_FLAGS += -fopenmp
 
 ###########################################################################
 #
@@ -65,4 +66,4 @@ clean:
 endif
 
 stencil.o:
-	$(CXX) -o stencil.o -c stencil.cc $(CC_FLAGS) $(INC_FLAGS) -O3
+	$(CXX) -o stencil.o -c stencil.cc $(CC_FLAGS) $(INC_FLAGS) -O3 -fopenmp
