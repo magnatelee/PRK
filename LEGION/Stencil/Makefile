@@ -34,6 +34,8 @@ USE_GASNET      ?= 0		# Include GASNet support (requires GASNet)
 USE_HDF         ?= 0		# Include HDF5 support (requires HDF5)
 ALT_MAPPERS     ?= 0		# Include alternative mappers (not recommended)
 
+USE_OPENMP      ?= 1
+
 # Put the binary file name here
 OUTFILE		?= stencil
 # List all the application source files here
@@ -45,6 +47,10 @@ CC_FLAGS	= $(RADIUSFLAG) -DRESTRICT_KEYWORD
 NVCC_FLAGS	?=
 GASNET_FLAGS	?=
 LD_FLAGS	?=
+
+ifeq ($(USE_OPENMP), 1)
+	CC_FLAGS += -fopenmp
+endif
 
 ###########################################################################
 #
