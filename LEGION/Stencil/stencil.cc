@@ -1010,8 +1010,10 @@ inline void stencil(DTYPE* RESTRICT inputPtr,
 #define IN(i, j)     inputPtr[(j) * offsetY + i]
 #define OUT(i, j)    outputPtr[(j) * offsetY + i]
 #define WEIGHT(i, j) weightPtr[(j + RADIUS) * (2 * RADIUS + 1) + (i + RADIUS)]
-  for (coord_t j = startY; j < endY; ++j)
-    for (coord_t i = startX; i < endX; ++i)
+  coord_t i, j;
+#pragma omp parallel for private (i)
+  for (j = startY; j < endY; ++j)
+    for (i = startX; i < endX; ++i)
     {
       for (coord_t jj = -RADIUS; jj <= RADIUS; jj++)
         OUT(i, j) += WEIGHT(0, jj) * IN(i, j + jj);
@@ -1103,8 +1105,10 @@ void inc_field_task(const Task *task,
     coord_t startY = 0;
     coord_t endX = rect.hi[0] - rect.lo[0] + 1;
     coord_t endY = rect.hi[1] - rect.lo[1] + 1;
-    for (coord_t j = startY; j < endY; ++j)
-      for (coord_t i = startX; i < endX; ++i)
+    coord_t i, j;
+#pragma omp parallel for private (i)
+    for (j = startY; j < endY; ++j)
+      for (i = startX; i < endX; ++i)
         IN(i, j) += 1.0;
   }
 #undef IN
