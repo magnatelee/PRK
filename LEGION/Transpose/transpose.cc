@@ -156,7 +156,7 @@ void task_toplevel(const Task *task,
   *********************************************************************/
 
   // Using the same 1-D approach in the serial code to contain 2-D matrix
-  Rect<1> elem_rect(Point<1>(0),Point<1>(order*order-1));
+  Arrays::Rect<1> elem_rect(Arrays::Point<1>(0),Arrays::Point<1>(order*order-1));
   Domain domain = Domain::from_rect<1>(elem_rect);
   IndexSpace is = runtime->create_index_space(ctx, domain);
 
@@ -182,7 +182,7 @@ void task_toplevel(const Task *task,
   *********************************************************************/
   // Each partition will be associated with a unique color(unsigned int)
   // Here Rect and Domain are used to depict our partitioning scheme
-  Rect<1> color_bounds(Point<1>(0),Point<1>(num_partitions-1));
+  Arrays::Rect<1> color_bounds(Arrays::Point<1>(0),Arrays::Point<1>(num_partitions-1));
   Domain color_domain = Domain::from_rect<1>(color_bounds);
 
   IndexPartition ip;
@@ -290,7 +290,7 @@ void init_a_task(const Task *task,
 
   Domain dom = runtime->get_index_space_domain(ctx,
       task->regions[0].region.get_index_space());
-  Rect<1> rect = dom.get_rect<1>();
+  Arrays::Rect<1> rect = dom.get_rect<1>();
 
   for (GenericPointInRectIterator<1> pir(rect); pir; pir++)
   {
@@ -313,7 +313,7 @@ void init_b_task(const Task *task,
 
   Domain dom = runtime->get_index_space_domain(ctx,
       task->regions[0].region.get_index_space());
-  Rect<1> rect = dom.get_rect<1>();
+  Arrays::Rect<1> rect = dom.get_rect<1>();
 
   for (GenericPointInRectIterator<1> pir(rect); pir; pir++)
   {
@@ -346,8 +346,8 @@ std::pair<double, double> transpose_task(const Task *task,
   Domain dom_b = runtime->get_index_space_domain(ctx,
       task->regions[1].region.get_index_space());
 
-  Rect<1> rect_a = dom_a.get_rect<1>();
-  Rect<1> rect_b = dom_b.get_rect<1>();
+  Arrays::Rect<1> rect_a = dom_a.get_rect<1>();
+  Arrays::Rect<1> rect_b = dom_b.get_rect<1>();
 
   double ts_start = DBL_MAX; 
   double ts_end = DBL_MIN;
@@ -355,10 +355,10 @@ std::pair<double, double> transpose_task(const Task *task,
   double* b = 0;
 
   {
-    Rect<1> subrect_a; ByteOffset offsets_a[1];
+    Arrays::Rect<1> subrect_a; ByteOffset offsets_a[1];
     a = acc_a.raw_rect_ptr<1>(rect_a, subrect_a, offsets_a);
     assert(rect_a == subrect_a);
-    Rect<1> subrect_b; ByteOffset offsets_b[1];
+    Arrays::Rect<1> subrect_b; ByteOffset offsets_b[1];
     b = acc_b.raw_rect_ptr<1>(rect_b, subrect_b, offsets_b);
     assert(rect_b == subrect_b);
   }
@@ -416,7 +416,7 @@ void check_task(const Task *task,
 
   Domain dom = runtime->get_index_space_domain(ctx,
       task->regions[0].region.get_index_space());
-  Rect<1> rect = dom.get_rect<1>();
+  Arrays::Rect<1> rect = dom.get_rect<1>();
 
   double abserr = 0.0;
   double epsilon=1.e-8; /* error tolerance */
@@ -427,7 +427,7 @@ void check_task(const Task *task,
     int index_b = pir.p.x[0];
     int i = index_b / n;
     int j = index_b % n;
-    Point<1> p_b(index_b);
+    Arrays::Point<1> p_b(index_b);
     double value = acc_b.read(DomainPoint::from_point<1>(p_b));
     abserr += ABS(value - (double)((j*n + i)*(iterations+1)+addit));
   }
