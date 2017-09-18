@@ -189,7 +189,7 @@ void task_toplevel(const Task *task,
   // Assuming evenly partitioned blocks here
   // Blockify will evenly divide a rectangle into implicitly disjoint subsets
   // containing the specified number of points in each block.
-  Blockify<1> coloring(order * order/num_partitions);
+  Arrays::Blockify<1> coloring(order * order/num_partitions);
   ip = runtime->create_index_partition(ctx, is, coloring);
 
   LogicalPartition input_lp = runtime->get_logical_partition(ctx, lr_a, ip);
@@ -241,7 +241,7 @@ void task_toplevel(const Task *task,
   double ts_start = DBL_MAX, ts_end = DBL_MIN;
   std::pair<double, double> times(ts_start, ts_end);
 
-  for (GenericPointInRectIterator<1> pir(color_bounds); pir; pir++){
+  for (Arrays::GenericPointInRectIterator<1> pir(color_bounds); pir; pir++){
     std::pair<double, double> times(fm.get_result<pairdd>(DomainPoint::from_point<1>(pir.p)));
     ts_start = MIN(ts_start, times.first);
     ts_end = MAX(ts_end, times.second);
@@ -292,7 +292,7 @@ void init_a_task(const Task *task,
       task->regions[0].region.get_index_space());
   Arrays::Rect<1> rect = dom.get_rect<1>();
 
-  for (GenericPointInRectIterator<1> pir(rect); pir; pir++)
+  for (Arrays::GenericPointInRectIterator<1> pir(rect); pir; pir++)
   {
     accessor_a.write(DomainPoint::from_point<1>(pir.p), pir.p.x[0]);
   }
@@ -315,7 +315,7 @@ void init_b_task(const Task *task,
       task->regions[0].region.get_index_space());
   Arrays::Rect<1> rect = dom.get_rect<1>();
 
-  for (GenericPointInRectIterator<1> pir(rect); pir; pir++)
+  for (Arrays::GenericPointInRectIterator<1> pir(rect); pir; pir++)
   {
     accessor_b.write(DomainPoint::from_point<1>(pir.p), 0.0);
   }
@@ -423,7 +423,7 @@ void check_task(const Task *task,
 
   double addit = ((double)(iterations+1) * (double) (iterations))/2.0;
 
-  for (GenericPointInRectIterator<1> pir(rect); pir; pir++) {
+  for (Arrays::GenericPointInRectIterator<1> pir(rect); pir; pir++) {
     int index_b = pir.p.x[0];
     int i = index_b / n;
     int j = index_b % n;
