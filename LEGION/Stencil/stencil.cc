@@ -315,7 +315,8 @@ void top_level_task(const Task *task,
       waitAnalysis = true;
   }
 
-  num_ranks = gasnet_nodes();
+  Future tunable = runtime->select_tunable_value(ctx, DefaultMapper::DEFAULT_TUNABLE_NODE_COUNT);
+  num_ranks = tunable.get_result<size_t>();
 
   printf("Parallel Research Kernels Version %s\n", PRKVERSION);
   printf("Legion Stencil Execution on 2D grid\n");
