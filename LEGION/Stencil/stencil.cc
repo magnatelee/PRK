@@ -140,8 +140,8 @@ void StencilMapper::slice_task(const MapperContext    ctx,
   std::vector<Processor>& procs =
     sysmem_local_procs[proc_sysmems[task.parent_task->current_proc]];
   assert(input.domain.get_dim() == 1);
-  Rect<1> point_rect = input.domain.get_rect<1>();
-  Point<1> num_blocks(procs.size());
+  Arrays::Rect<1> point_rect = input.domain.get_rect<1>();
+  Arrays::Point<1> num_blocks(procs.size());
   default_decompose_points<1>(point_rect, procs,
       num_blocks, false, stealing_enabled, output.slices);
   cpu_slices_cache[input.domain] = output.slices;
@@ -315,7 +315,8 @@ void top_level_task(const Task *task,
       waitAnalysis = true;
   }
 
-  num_ranks = gasnet_nodes();
+  Future tunable = runtime->select_tunable_value(ctx, DefaultMapper::DEFAULT_TUNABLE_NODE_COUNT);
+  num_ranks = tunable.get_result<size_t>();
 
   printf("Parallel Research Kernels Version %s\n", PRKVERSION);
   printf("Legion Stencil Execution on 2D grid\n");
@@ -353,7 +354,7 @@ void top_level_task(const Task *task,
   ** Create the master index space
   *********************************************************************/
   Domain domain =
-    Domain::from_rect<2>(Rect<2>(make_point(0, 0), make_point(n - 1, n - 1)));
+    Domain::from_rect<2>(Arrays::Rect<2>(Arrays::make_point(0, 0), Arrays::make_point(n - 1, n - 1)));
   IndexSpace is = runtime->create_index_space(ctx, domain);
 
   /*********************************************************************
@@ -361,7 +362,7 @@ void top_level_task(const Task *task,
   *********************************************************************/
   Domain colorSpace =
     Domain::from_rect<2>(
-        Rect<2>(make_point(0, 0), make_point(Num_procsx - 1, Num_procsy - 1)));
+        Arrays::Rect<2>(Arrays::make_point(0, 0), Arrays::make_point(Num_procsx - 1, Num_procsy - 1)));
 
   int tileSizeX = n / Num_procsx;
   int tileSizeY = n / Num_procsy;
@@ -380,13 +381,13 @@ void top_level_task(const Task *task,
       int sizeX = tileX < remainSizeX ? tileSizeX + 1 : tileSizeX;
 
       DomainPoint tilePoint =
-        DomainPoint::from_point<2>(make_point(tileX, tileY));
+        DomainPoint::from_point<2>(Arrays::make_point(tileX, tileY));
 
-      Domain tileDomain = Domain::from_rect<2>(Rect<2>(
-            make_point(
+      Domain tileDomain = Domain::from_rect<2>(Arrays::Rect<2>(
+            Arrays::make_point(
               std::max(posX - RADIUS, 0),
               std::max(posY - RADIUS, 0)),
-            make_point(
+            Arrays::make_point(
               std::min(posX + sizeX + RADIUS, n) - 1,
               std::min(posY + sizeY + RADIUS, n) - 1)));
 
@@ -414,7 +415,7 @@ void top_level_task(const Task *task,
     for (int tileX = 0; tileX < Num_procsx; ++tileX)
     {
       DomainPoint tilePoint =
-        DomainPoint::from_point<2>(make_point(tileX, tileY));
+        DomainPoint::from_point<2>(Arrays::make_point(tileX, tileY));
 
       IndexSpace subspace =
         runtime->get_index_subspace(ctx, haloIp, tilePoint);
@@ -436,7 +437,7 @@ void top_level_task(const Task *task,
     for (int tileX = 0; tileX < Num_procsx; ++tileX)
     {
       DomainPoint tilePoint =
-        DomainPoint::from_point<2>(make_point(tileX, tileY));
+        DomainPoint::from_point<2>(Arrays::make_point(tileX, tileY));
       fullBarriers[tilePoint].reserve(4);
       emptyBarriers[tilePoint].reserve(4);
       for (int dir = GHOST_LEFT; dir <= GHOST_DOWN; ++dir)
@@ -462,7 +463,7 @@ void top_level_task(const Task *task,
     for (int tileX = 0; tileX < Num_procsx; ++tileX)
     {
       DomainPoint tilePoint =
-        DomainPoint::from_point<2>(make_point(tileX, tileY));
+        DomainPoint::from_point<2>(Arrays::make_point(tileX, tileY));
 
       args[tilePoint].n = n;
       args[tilePoint].numThreads = threads;
@@ -490,7 +491,7 @@ void top_level_task(const Task *task,
             neighborCoords[0] >= Num_procsx || neighborCoords[1] >= Num_procsy)
           continue;
         DomainPoint neighborPoint =
-          DomainPoint::from_point<2>(Point<2>(neighborCoords));
+          DomainPoint::from_point<2>(Arrays::Point<2>(neighborCoords));
 
         args[tilePoint].fullOutput[dir] = fullBarriers[tilePoint][dir];
         args[tilePoint].emptyOutput[dir] = emptyBarriers[tilePoint][dir];
@@ -518,7 +519,7 @@ void top_level_task(const Task *task,
     for (int tileX = 0; tileX < Num_procsx; ++tileX)
     {
       DomainPoint tilePoint =
-        DomainPoint::from_point<2>(make_point(tileX, tileY));
+        DomainPoint::from_point<2>(Arrays::make_point(tileX, tileY));
       tuple_double p = fm.get_result<tuple_double>(tilePoint);
       maxTime = MAX(maxTime, p.first.second - p.first.first);
       abserr += p.second;
@@ -556,16 +557,16 @@ static LogicalPartition createHaloPartition(LogicalRegion lr,
                                             HighLevelRuntime *runtime)
 {
   IndexSpace is = lr.get_index_space();
-  Rect<2> haloBox =
+  Arrays::Rect<2> haloBox =
     runtime->get_index_space_domain(ctx, is).get_rect<2>();
-  Rect<2> boundingBox = haloBox;
+  Arrays::Rect<2> boundingBox = haloBox;
   for (int i = 0; i < 2; ++i)
   {
     if (boundingBox.lo[i] != 0) boundingBox.lo.x[i] += RADIUS;
     if (boundingBox.hi[i] != n - 1) boundingBox.hi.x[i] -= RADIUS;
   }
 
-  Domain colorSpace = Domain::from_rect<1>(Rect<1>(GHOST_LEFT, PRIVATE));
+  Domain colorSpace = Domain::from_rect<1>(Arrays::Rect<1>(GHOST_LEFT, PRIVATE));
   DomainPointColoring coloring;
   std::vector<DomainPoint> colors;
   for (int color = GHOST_LEFT; color <= PRIVATE; ++color)
@@ -574,7 +575,7 @@ static LogicalPartition createHaloPartition(LogicalRegion lr,
     coord_t rd[] = { 0, 0 };
     colors.push_back(DomainPoint::from_point<1>(color));
     coloring[colors[color]] =
-      Domain::from_rect<2>(Rect<2>(Point<2>(lu), Point<2>(rd)));
+      Domain::from_rect<2>(Arrays::Rect<2>(Arrays::Point<2>(lu), Arrays::Point<2>(rd)));
   }
 
   if (boundingBox.lo[0] > 0)
@@ -582,28 +583,28 @@ static LogicalPartition createHaloPartition(LogicalRegion lr,
     coord_t lu[] = { haloBox.lo[0], boundingBox.lo[1] };
     coord_t rd[] = { boundingBox.lo[0] - 1, boundingBox.hi[1] };
     coloring[colors[GHOST_LEFT]] =
-      Domain::from_rect<2>(Rect<2>(Point<2>(lu), Point<2>(rd)));
+      Domain::from_rect<2>(Arrays::Rect<2>(Arrays::Point<2>(lu), Arrays::Point<2>(rd)));
   }
   if (boundingBox.lo[1] > 0)
   {
     coord_t lu[] = { boundingBox.lo[0], haloBox.lo[1] };
     coord_t rd[] = { boundingBox.hi[0], boundingBox.lo[1] - 1 };
     coloring[colors[GHOST_UP]] =
-      Domain::from_rect<2>(Rect<2>(Point<2>(lu), Point<2>(rd)));
+      Domain::from_rect<2>(Arrays::Rect<2>(Arrays::Point<2>(lu), Arrays::Point<2>(rd)));
   }
   if (boundingBox.hi[0] < n - 1)
   {
     coord_t lu[] = { boundingBox.hi[0] + 1, boundingBox.lo[1] };
     coord_t rd[] = { haloBox.hi[0], boundingBox.hi[1] };
     coloring[colors[GHOST_RIGHT]] =
-      Domain::from_rect<2>(Rect<2>(Point<2>(lu), Point<2>(rd)));
+      Domain::from_rect<2>(Arrays::Rect<2>(Arrays::Point<2>(lu), Arrays::Point<2>(rd)));
   }
   if (boundingBox.hi[1] < n - 1)
   {
     coord_t lu[] = { boundingBox.lo[0], boundingBox.hi[1] + 1 };
     coord_t rd[] = { boundingBox.hi[0], haloBox.hi[1] };
     coloring[colors[GHOST_DOWN]] =
-      Domain::from_rect<2>(Rect<2>(Point<2>(lu), Point<2>(rd)));
+      Domain::from_rect<2>(Arrays::Rect<2>(Arrays::Point<2>(lu), Arrays::Point<2>(rd)));
   }
 
   coloring[colors[PRIVATE]] = Domain::from_rect<2>(boundingBox);
@@ -620,7 +621,7 @@ static LogicalPartition createBalancedPartition(LogicalRegion lr,
                                                 HighLevelRuntime *runtime)
 {
   IndexSpace is = lr.get_index_space();
-  Rect<2> rect = runtime->get_index_space_domain(ctx, is).get_rect<2>();
+  Arrays::Rect<2> rect = runtime->get_index_space_domain(ctx, is).get_rect<2>();
   coord_t startX = rect.lo[0];
   coord_t endX = rect.hi[0];
   coord_t sizeY = rect.hi[1] - rect.lo[1] + 1;
@@ -628,8 +629,8 @@ static LogicalPartition createBalancedPartition(LogicalRegion lr,
   coord_t offY = sizeY / numThreads;
   coord_t remainder = sizeY % numThreads;
 
-  Domain colorSpace = Domain::from_rect<1>(Rect<1>(
-        make_point(0), make_point(numThreads - 1)));
+  Domain colorSpace = Domain::from_rect<1>(Arrays::Rect<1>(
+        Arrays::make_point(0), Arrays::make_point(numThreads - 1)));
   std::vector<DomainPoint> colors;
   for (int color = 0; color < numThreads; ++color)
     colors.push_back(DomainPoint::from_point<1>(color));
@@ -643,7 +644,7 @@ static LogicalPartition createBalancedPartition(LogicalRegion lr,
     assert(startY < rect.hi[1]);
     assert(startY + widthY - 1 <= rect.hi[1]);
     coloring[colors[color]] =
-      Domain::from_rect<2>(Rect<2>(Point<2>(lu), Point<2>(rd)));
+      Domain::from_rect<2>(Arrays::Rect<2>(Arrays::Point<2>(lu), Arrays::Point<2>(rd)));
     startY += widthY;
   }
 
@@ -665,7 +666,7 @@ tuple_double spmd_task(const Task *task,
   LogicalPartition localLp = createHaloPartition(localLr, n, ctx, runtime);
 
   IndexSpace is = localLr.get_index_space();
-  Rect<2> haloBox = runtime->get_index_space_domain(ctx, is).get_rect<2>();
+  Arrays::Rect<2> haloBox = runtime->get_index_space_domain(ctx, is).get_rect<2>();
 
   std::vector<bool> hasNeighbor(4);
   hasNeighbor[GHOST_LEFT] = haloBox.lo[0] != 0;
@@ -704,8 +705,8 @@ tuple_double spmd_task(const Task *task,
           ghostLr.get_field_space());
   }
 
-  Domain launchDomain = Domain::from_rect<1>(Rect<1>(
-        make_point(0), make_point(numThreads - 1)));
+  Domain launchDomain = Domain::from_rect<1>(Arrays::Rect<1>(
+        Arrays::make_point(0), Arrays::make_point(numThreads - 1)));
 
   // setup arguments for the child tasks
   StencilArgs stencilArgs;
@@ -719,9 +720,9 @@ tuple_double spmd_task(const Task *task,
   LogicalRegion weightLr;
 
   {
-    Domain domain = Domain::from_rect<2>(Rect<2>(
-          make_point(-RADIUS, -RADIUS),
-          make_point(RADIUS, RADIUS)));
+    Domain domain = Domain::from_rect<2>(Arrays::Rect<2>(
+          Arrays::make_point(-RADIUS, -RADIUS),
+          Arrays::make_point(RADIUS, RADIUS)));
     IndexSpace is = runtime->create_index_space(ctx, domain);
     FieldSpace fs = runtime->create_field_space(ctx);
     {
@@ -921,11 +922,11 @@ void init_weight_task(const Task *task,
     regions[0].get_field_accessor(FID_WEIGHT).typeify<DTYPE>();
   Domain dom = runtime->get_index_space_domain(ctx,
       task->regions[0].region.get_index_space());
-  Rect<2> rect = dom.get_rect<2>();
+  Arrays::Rect<2> rect = dom.get_rect<2>();
 
-  for (GenericPointInRectIterator<2> pir(rect); pir; pir++)
+  for (Arrays::GenericPointInRectIterator<2> pir(rect); pir; pir++)
   {
-    Point<2> p = pir.p;
+    Arrays::Point<2> p = pir.p;
     coord_t xx = p[0];
     coord_t yy = p[1];
 
@@ -965,7 +966,7 @@ void init_field_task(const Task *task,
 
   Domain dom = runtime->get_index_space_domain(ctx,
       task->regions[0].region.get_index_space());
-  Rect<2> rect = dom.get_rect<2>();
+  Arrays::Rect<2> rect = dom.get_rect<2>();
 
   coord_t luX = rect.lo[0];
   coord_t luY = rect.lo[1];
@@ -976,7 +977,7 @@ void init_field_task(const Task *task,
   DTYPE* inPtr = 0;
   DTYPE* outPtr = 0;
   {
-    Rect<2> s; ByteOffset bo[2];
+    Arrays::Rect<2> s; ByteOffset bo[2];
     inPtr = inputAcc.raw_rect_ptr<2>(rect, s, bo);
     outPtr = outputAcc.raw_rect_ptr<2>(rect, s, bo);
     offsetY = bo[1].offset / sizeof(DTYPE);
@@ -1042,8 +1043,8 @@ double stencil_task(const Task *task,
       task->regions[1].region.get_index_space());
   Domain weightDom = runtime->get_index_space_domain(ctx,
       task->regions[2].region.get_index_space());
-  Rect<2> rect = dom.get_rect<2>();
-  Rect<2> weightRect = weightDom.get_rect<2>();
+  Arrays::Rect<2> rect = dom.get_rect<2>();
+  Arrays::Rect<2> weightRect = weightDom.get_rect<2>();
 
   // get raw pointers
   DTYPE* inputPtr = 0;
@@ -1051,7 +1052,7 @@ double stencil_task(const Task *task,
   DTYPE* weightPtr = 0;
   coord_t offsetY;
   {
-    Rect<2> r; ByteOffset bo[2];
+    Arrays::Rect<2> r; ByteOffset bo[2];
     inputPtr = inputAcc.raw_rect_ptr<2>(rect, r, bo);
     offsetY = bo[1].offset / sizeof(DTYPE);
     outputPtr = outputAcc.raw_rect_ptr<2>(rect, r, bo);
@@ -1088,11 +1089,11 @@ void inc_field_task(const Task *task,
     regions[0].get_field_accessor(FID_IN).typeify<DTYPE>();
   Domain dom = runtime->get_index_space_domain(ctx,
       task->regions[0].region.get_index_space());
-  Rect<2> rect = dom.get_rect<2>();
+  Arrays::Rect<2> rect = dom.get_rect<2>();
   coord_t offsetY;
   DTYPE* ptr = 0;
   {
-    Rect<2> r; ByteOffset bo[2];
+    Arrays::Rect<2> r; ByteOffset bo[2];
     ptr = acc.raw_rect_ptr<2>(rect, r, bo);
     offsetY = bo[1].offset / sizeof(DTYPE);
   }
@@ -1121,7 +1122,7 @@ double check_task(const Task *task,
 
   Domain dom = runtime->get_index_space_domain(ctx,
       task->regions[0].region.get_index_space());
-  Rect<2> rect = dom.get_rect<2>();
+  Arrays::Rect<2> rect = dom.get_rect<2>();
 
   StencilArgs *args = (StencilArgs*)task->args;
   int n = args->n;
@@ -1133,7 +1134,7 @@ double check_task(const Task *task,
 
   DTYPE* ptr = 0;
   {
-    Rect<2> s; ByteOffset bo[2];
+    Arrays::Rect<2> s; ByteOffset bo[2];
     ptr = acc.raw_rect_ptr<2>(rect, s, bo);
     offsetY = bo[1].offset / sizeof(DTYPE);
   }

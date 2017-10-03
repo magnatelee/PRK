@@ -45,6 +45,6 @@ POSSIBILITY OF SUCH DAMAGE.
 using namespace Legion;
 using namespace Legion::Mapping;
 using namespace LegionRuntime::Accessor;
-using namespace LegionRuntime::Arrays;
+using namespace LegionRuntime;
 
 #endif /* PRK_LEGION_H */
