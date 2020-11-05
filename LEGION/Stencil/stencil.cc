@@ -97,7 +97,8 @@ class StencilMapper : public DefaultMapper
                                       MapMustEpochOutput&     output);
     virtual Memory default_policy_select_target_memory(MapperContext ctx,
                                             Processor target_proc,
-                                            const RegionRequirement &req);
+                                            const RegionRequirement &req,
+                                            MemoryConstraint mc = MemoryConstraint());
   private:
     //std::vector<Processor>& procs_list;
     std::vector<Memory>& sysmems_list;
@@ -121,7 +122,8 @@ StencilMapper::StencilMapper(MapperRuntime *rt, Machine machine, Processor local
 
 Memory StencilMapper::default_policy_select_target_memory(MapperContext ctx,
                                                   Processor target_proc,
-                                                  const RegionRequirement &req)
+                                                  const RegionRequirement &req,
+                                                  MemoryConstraint mc)
 {
   return proc_sysmems[target_proc];
 }
